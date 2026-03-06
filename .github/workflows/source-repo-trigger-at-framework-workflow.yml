@@ -37,19 +37,7 @@ jobs:
 
           API="https://api.github.com/repos/${ATF_REPO}/actions/workflows/${WORKFLOW_FILE}/dispatches"
 
-          payload=$(cat <<EOF
-{
-  "ref": "main",
-  "inputs": {
-    "source_repo": "${SOURCE_REPO}",
-    "source_ref": "${SOURCE_REF}",
-    "before_sha": "${BEFORE_SHA}",
-    "source_sha": "${SOURCE_SHA}",
-    "commit_message": "${COMMIT_MESSAGE}"
-  }
-}
-EOF
-)
+          payload=$(printf '{"ref":"main","inputs":{"source_repo":"%s","source_ref":"%s","before_sha":"%s","source_sha":"%s","commit_message":"%s"}}' "$SOURCE_REPO" "$SOURCE_REF" "$BEFORE_SHA" "$SOURCE_SHA" "$COMMIT_MESSAGE")
 
           curl -sS -X POST \
             -H "Accept: application/vnd.github+json" \
