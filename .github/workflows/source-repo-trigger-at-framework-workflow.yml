@@ -1,0 +1,61 @@
+# push 触发 -> 调用 at-framework 的 workflow_dispatch
+
+name: Trigger AT Framework Listener Output
+
+on:
+  push:
+    branches: [ main, master ]
+
+concurrency:
+  group: trigger-at-framework-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Trigger at-framework workflow_dispatch
+        env:
+          ATF_TOKEN: ${{ secrets.AT_FRAMEWORK_TOKEN }}
+          ATF_REPO: daisy-aishu/at-framework
+          WORKFLOW_FILE: generate-listener-output.yml
+          SOURCE_REPO: ${{ github.repository }}
+          SOURCE_REF: ${{ github.ref_name }}
+          BEFORE_SHA: ${{ github.event.before }}
+          SOURCE_SHA: ${{ github.sha }}
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "$ATF_TOKEN" ]; then
+            echo "AT_FRAMEWORK_TOKEN is required to dispatch workflow in at-framework repo"
+            exit 1
+          fi
+
+          API="https://api.github.com/repos/${ATF_REPO}/actions/workflows/${WORKFLOW_FILE}/dispatches"
+
+          payload=$(python - <<'PY'
+import json, os
+print(json.dumps({
+  "ref": "main",
+  "inputs": {
+    "source_repo": os.environ["SOURCE_REPO"],
+    "source_ref": os.environ["SOURCE_REF"],
+    "before_sha": os.environ.get("BEFORE_SHA", ""),
+    "source_sha": os.environ["SOURCE_SHA"],
+    "commit_message": os.environ.get("COMMIT_MESSAGE", "")
+  }
+}))
+PY
+)
+
+          curl -sS -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${ATF_TOKEN}" \
+            "${API}" \
+            -d "$payload"
+
+          echo "Dispatched ${ATF_REPO} workflow ${WORKFLOW_FILE}"
