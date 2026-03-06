@@ -4,7 +4,7 @@ name: Trigger AT Framework Listener Output
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main, test ]
 
 concurrency:
   group: trigger-at-framework-${{ github.ref }}
