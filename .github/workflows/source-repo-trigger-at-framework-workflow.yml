@@ -37,19 +37,18 @@ jobs:
 
           API="https://api.github.com/repos/${ATF_REPO}/actions/workflows/${WORKFLOW_FILE}/dispatches"
 
-          payload=$(python - <<'PY'
-import json, os
-print(json.dumps({
+          payload=$(cat <<EOF
+{
   "ref": "main",
   "inputs": {
-    "source_repo": os.environ["SOURCE_REPO"],
-    "source_ref": os.environ["SOURCE_REF"],
-    "before_sha": os.environ.get("BEFORE_SHA", ""),
-    "source_sha": os.environ["SOURCE_SHA"],
-    "commit_message": os.environ.get("COMMIT_MESSAGE", "")
+    "source_repo": "${SOURCE_REPO}",
+    "source_ref": "${SOURCE_REF}",
+    "before_sha": "${BEFORE_SHA}",
+    "source_sha": "${SOURCE_SHA}",
+    "commit_message": "${COMMIT_MESSAGE}"
   }
-}))
-PY
+}
+EOF
 )
 
           curl -sS -X POST \
